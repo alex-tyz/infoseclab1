@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.github.spotbugs' version '6.5.12'
+}
+
+group = 'org.example'
+version = '0.0.1'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+// SCA (Snyk) нашёл уязвимости в транзитивных зависимостях Spring Boot 4.1.1.
+// Поднимаем версии до исправленных, пока не выйдет новый Spring Boot.
+ext['tomcat.version'] = '11.0.26'        // CRITICAL: обход аутентификации DIGEST/FORM и WebSocket
+ext['jackson-bom.version'] = '3.1.7'     // HIGH: ReDoS и раздувание памяти при разборе JSON
+ext['jackson-2-bom.version'] = '2.21.7'  // то же для Jackson 2 (тянет jjwt-jackson)
+
+dependencies {
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    runtimeOnly 'com.h2database:h2'
+    implementation 'org.springframework.security:spring-security-crypto'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+spotbugs {
+    // MAX — самый глубокий анализ (медленнее, но находит больше)
+    effort = com.github.spotbugs.snom.Effort.valueOf('MAX')
+    // Найдены проблемы → сборка ПАДАЕТ. Это и делает сканер «воротами» в CI
+    ignoreFailures = false
+    excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
+// Тесты не сканируем — только код, который уходит в прод
+tasks.named('spotbugsTest') {
+    enabled = false
+}
+
+// HTML-отчёт для людей (и скриншотов), XML — для машин
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+    reports {
+        html { required = true }
+        xml { required = true }
+    }
+}

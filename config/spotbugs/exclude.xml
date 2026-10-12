@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+        EI_EXPOSE_REP2 в репозиториях — ложное срабатывание.
+        JdbcTemplate внедряется Spring (Dependency Injection) и намеренно
+        является общим синглтоном для всего приложения. Копировать его не нужно.
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="org.example.secureapi.repository.UserRepository"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Class name="org.example.secureapi.repository.NoteRepository"/>
+    </Match>
+</FindBugsFilter>

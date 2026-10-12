@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+jobs:
+  test:
+    name: Tests (JUnit + MockMvc)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Скачать код репозитория
+        uses: actions/checkout@v7
+
+      - name: Установить Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Настроить Gradle (с кэшем)
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Запустить тесты
+        run: ./gradlew test
+
+      - name: Сохранить отчёт
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-report
+          path: build/reports/tests/test/
+
+  sast:
+    name: SAST (SpotBugs + FindSecBugs)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Скачать код репозитория
+        uses: actions/checkout@v7
+
+      - name: Установить Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Настроить Gradle (с кэшем)
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Запустить SpotBugs
+        run: ./gradlew spotbugsMain
+
+      - name: Сохранить отчёт
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: spotbugs-report
+          path: build/reports/spotbugs/
+
+  sca:
+    name: SCA (Snyk Open Source)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Скачать код репозитория
+        uses: actions/checkout@v7
+
+      - name: Установить Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Настроить Gradle (с кэшем)
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Установить Snyk CLI
+        uses: snyk/actions/setup@master
+
+      - name: Проверить зависимости (snyk test)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: >
+          snyk test
+          --configuration-matching='^runtimeClasspath$'
+          --severity-threshold=high
+          --json-file-output=snyk-report.json
+
+      - name: Сделать HTML-отчёт
+        if: always()
+        run: npx --yes snyk-to-html -i snyk-report.json -o snyk-report.html
+
+      - name: Сохранить отчёт
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: snyk-report
+          path: snyk-report.*
