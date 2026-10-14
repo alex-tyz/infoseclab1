@@ -94,4 +94,4 @@ Snyk нашёл уязвимости в зависимостях Spring Boot 4.1
 
 ## Последний успешный запуск pipeline
 
-https://github.com/alex-tyz/infoseclab1/actions/runs/38292583155
+https://github.com/alex-tyz/infoseclab1/actions/runs/38553650278
