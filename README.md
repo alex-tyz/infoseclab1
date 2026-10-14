@@ -83,12 +83,14 @@ SpotBugs нашёл `CT_CONSTRUCTOR_THROW` в `JwtService` (исправлено
 
 ![SAST до исправления](sast-before.png)
 ![SAST после исправления](sast-after.png)
+![Отчёт SpotBugs](spotbugs-report.png)
 
 ### SCA: Snyk
 
 Snyk нашёл уязвимости в зависимостях Spring Boot 4.1.1 (Tomcat — Critical, Jackson — High). Версии обновлены в `build.gradle`, после чего проверка проходит.
 
 ![SCA](sca-after.png)
+![Отчёт Snyk](snyk-report.png)
 
 ## Последний успешный запуск pipeline
 
